@@ -116,6 +116,14 @@ public:
             }
         }
     }
+
+    void clear() {
+        nodes.clear();
+        nodes_coordinates.clear();
+        startingNode.reset();
+        Node::nextID = 0;
+
+    }
 };
 
 int main() {
@@ -135,6 +143,11 @@ int main() {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
+            }
+            else if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::C) {
+                    g.clear();
+                }
             }
             else if (event.type == sf::Event::MouseButtonPressed) {
                 if (event.mouseButton.button == sf::Mouse::Right) {
