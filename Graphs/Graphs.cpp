@@ -50,6 +50,7 @@ class Graph {
 private:
     std::vector<std::shared_ptr<Node>> nodes;
     std::vector<sf::Vector2f> nodes_coordinates;
+    std::shared_ptr<Node> startingNode;
 
 public:
     std::shared_ptr<Node> addNode(sf::Vector2f position) {
@@ -72,6 +73,17 @@ public:
         return nodes_coordinates;
     }
 
+    void setStartingNode(const std::shared_ptr<Node>& node) {
+        startingNode = node;
+    }
+
+    void addEdgeIfValid(const std::shared_ptr<Node>& node) {
+        if (startingNode && startingNode != node) {
+            addEdge(startingNode, node);
+        }
+        startingNode.reset();
+    }
+
     void info() const {
         for (const auto& node : nodes) {
             std::cout << "Node ID: " << node->getID() << std::endl;
@@ -86,7 +98,9 @@ public:
                 }
                 std::cout << std::endl;
             }
+            std::cout << "-------------------" << std::endl;
         }
+        std::cout << "-------------------" << std::endl;
     }
 
     void draw(sf::RenderWindow& window) const {
@@ -123,7 +137,7 @@ int main() {
                 window.close();
             }
             else if (event.type == sf::Event::MouseButtonPressed) {
-                if (event.mouseButton.button == sf::Mouse::Left) {
+                if (event.mouseButton.button == sf::Mouse::Right) {
                     sf::Vector2f mousePosition = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
                     g.addNode(mousePosition);
                 }
@@ -151,8 +165,53 @@ int main() {
         }
 
         if (event.type == sf::Event::MouseButtonPressed) {
-            if (event.mouseButton.button == sf::Mouse::Right) {
+            if (event.mouseButton.button == sf::Mouse::Middle) {
                 g.info();
+            }
+        }
+
+        if (event.type == sf::Event::MouseButtonPressed) {
+            if (event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2f mousePosition = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
+
+                for (auto& node : nodes) {
+                    sf::CircleShape circle = node->getCircle();
+                    sf::Vector2f position = circle.getPosition();
+                    float radius = circle.getRadius();
+                    float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
+                    if (distance <= radius) {
+                        circle.setFillColor(sf::Color::Red);
+                        node->setCircle(circle);
+
+                        g.setStartingNode(node); // Set the starting node for the edge
+                    }
+                    else {
+                        circle.setFillColor(sf::Color::White);
+                        node->setCircle(circle);
+                    }
+                }
+            }
+        }
+        else if (event.type == sf::Event::MouseButtonReleased) {
+            if (event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2f mousePosition = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
+
+                for (auto& node : nodes) {
+                    sf::CircleShape circle = node->getCircle();
+                    sf::Vector2f position = circle.getPosition();
+                    float radius = circle.getRadius();
+                    float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
+                    if (distance <= radius) {
+                        circle.setFillColor(sf::Color::Red);
+                        node->setCircle(circle);
+
+                        g.addEdgeIfValid(node); // Add the edge if a valid node is under the mouse position
+                    }
+                    else {
+                        circle.setFillColor(sf::Color::White);
+                        node->setCircle(circle);
+                    }
+                }
             }
         }
 
