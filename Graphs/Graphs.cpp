@@ -1,12 +1,11 @@
-//Works without the destructors. TODO fix it for god's sake.
-
 #include <vector>
 #include <iostream>
+#include <memory>
 
 class Node {
 private:
     int id;
-    std::vector<Node*> neighbors;
+    std::vector<std::shared_ptr<Node>> neighbors;
 
 public:
     static int nextID;
@@ -20,11 +19,11 @@ public:
         return id;
     }
 
-    void addNeighbor(Node* neighbor) {
+    void addNeighbor(const std::shared_ptr<Node>& neighbor) {
         neighbors.emplace_back(neighbor);
     }
 
-    const std::vector<Node*>& getNeighbors() const {
+    const std::vector<std::shared_ptr<Node>>& getNeighbors() const {
         return neighbors;
     }
 };
@@ -34,7 +33,7 @@ int Node::nextID = 0;
 class Graph {
 private:
     int id;
-    std::vector<Node*> nodes;
+    std::vector<std::shared_ptr<Node>> nodes;
 
 public:
     static int nextID;
@@ -43,38 +42,39 @@ public:
 
     Graph(int id) : id(id) {
     }
-    Node* addNode() {
-        Node* n = new Node();
-        nodes.emplace_back(n);
-        return nodes.back();
+    std::shared_ptr<Node> addNode() {
+        auto newNode = std::make_shared<Node>();
+        nodes.push_back(newNode);
+        return newNode;
     }
 
-    Node* addNode(int nodeId) {
-        Node* n = new Node(nodeId);
-        nodes.emplace_back(n);
-        return nodes.back();
+    std::shared_ptr<Node> addNode(int nodeId) {
+        auto newNode = std::make_shared<Node>(nodeId);
+        nodes.push_back(newNode);
+        return newNode;
     }
 
-    void addEdge(Node* node1, Node* node2) {
+    void addEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
         node1->addNeighbor(node2);
         node2->addNeighbor(node1);
     }
 
-    const std::vector<Node*> getNodes() const {
+    const std::vector<std::shared_ptr<Node>>& getNodes() const {
         return nodes;
     }
 
     void print() const {
-        for (const Node* node : nodes) {
+        for (const auto& node : nodes) {
             std::cout << "Node ID: " << node->getID() << std::endl;
-            const std::vector<Node*>& neighbors = node->getNeighbors();
+            const auto& neighbors = node->getNeighbors();
             std::cout << "Neighbors: ";
-            for (const Node* neighbor : neighbors) {
+            for (const auto& neighbor : neighbors) {
                 std::cout << neighbor->getID() << " ";
             }
             std::cout << std::endl;
         }
     }
+
 };
 
 int Graph::nextID = 0;
@@ -91,10 +91,6 @@ int main() {
     g.addEdge(node2, node3);
 
     g.print();
-
-    delete node1;
-    delete node2;
-    delete node3;
 
     std::cout << Node::nextID << std::endl;
 
