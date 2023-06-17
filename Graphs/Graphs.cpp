@@ -1,18 +1,30 @@
+#include <SFML/Graphics.hpp>
 #include <vector>
-#include <iostream>
 #include <memory>
+#include <iostream>
 
 class Node {
 private:
     int id;
+    sf::CircleShape circle;
     std::vector<std::shared_ptr<Node>> neighbors;
 
 public:
     static int nextID;
-    Node() : id(nextID++) {
+    Node(sf::Vector2f position) : id(nextID++) {
+        circle.setRadius(20.f);
+        circle.setFillColor(sf::Color::White);
+        circle.setOutlineThickness(2.f);
+        circle.setOutlineColor(sf::Color::Black);
+        circle.setPosition(position);
     }
 
-    Node(int id) : id(id) {
+    const sf::CircleShape& getCircle() const {
+        return circle;
+    }
+
+    void setCircle(const sf::CircleShape& circle) {
+        this->circle = circle;
     }
 
     int getID() const {
@@ -26,31 +38,24 @@ public:
     const std::vector<std::shared_ptr<Node>>& getNeighbors() const {
         return neighbors;
     }
+
+    void draw(sf::RenderWindow& window) const {
+        window.draw(circle);
+    }
 };
 
 int Node::nextID = 0;
 
 class Graph {
 private:
-    int id;
     std::vector<std::shared_ptr<Node>> nodes;
+    std::vector<sf::Vector2f> nodes_coordinates;
 
 public:
-    static int nextID;
-    Graph() : id(nextID++) {
-    }
-
-    Graph(int id) : id(id) {
-    }
-    std::shared_ptr<Node> addNode() {
-        auto newNode = std::make_shared<Node>();
+    std::shared_ptr<Node> addNode(sf::Vector2f position) {
+        auto newNode = std::make_shared<Node>(position);
         nodes.push_back(newNode);
-        return newNode;
-    }
-
-    std::shared_ptr<Node> addNode(int nodeId) {
-        auto newNode = std::make_shared<Node>(nodeId);
-        nodes.push_back(newNode);
+        nodes_coordinates.push_back(position);
         return newNode;
     }
 
@@ -63,13 +68,17 @@ public:
         return nodes;
     }
 
-    void print() const {
+    const std::vector<sf::Vector2f>& getNodesCoordinates() const {
+        return nodes_coordinates;
+    }
+
+    void info() const {
         for (const auto& node : nodes) {
             std::cout << "Node ID: " << node->getID() << std::endl;
             const auto& neighbors = node->getNeighbors();
             std::cout << "Neighbors: ";
             if (neighbors.empty()) {
-                std::cout << "Empty";
+                std::cout << "Empty " << std::endl;
             }
             else {
                 for (const auto& neighbor : neighbors) {
@@ -80,32 +89,79 @@ public:
         }
     }
 
-};
-
-class DirectedGraph : public Graph {
-public:
-    void addEdge(std::shared_ptr<Node>& source, std::shared_ptr<Node>& target) {
-        source->addNeighbor(target);
+    void draw(sf::RenderWindow& window) const {
+        for (const auto& node : nodes) {
+            node->draw(window);
+            const auto& neighbors = node->getNeighbors();
+            for (const auto& neighbor : neighbors) {
+                sf::Vertex line[] = {
+                    sf::Vertex(node->getCircle().getPosition() + sf::Vector2f(node->getCircle().getRadius(), node->getCircle().getRadius())),
+                    sf::Vertex(neighbor->getCircle().getPosition() + sf::Vector2f(neighbor->getCircle().getRadius(), neighbor->getCircle().getRadius()))
+                };
+                window.draw(line, 2, sf::Lines);
+            }
+        }
     }
 };
 
-int Graph::nextID = 0;
-
 int main() {
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Graph Visualization");
 
-    DirectedGraph g;
-    auto node1 = g.addNode();
-    auto node2 = g.addNode();
-    auto node3 = g.addNode();
+    Graph g;
+    //auto node1 = g.addNode(sf::Vector2f(100.f, 100.f));
+    //auto node2 = g.addNode(sf::Vector2f(300.f, 200.f));
+    //auto node3 = g.addNode(sf::Vector2f(500.f, 100.f));
 
-    g.addEdge(node1, node2);
-    g.addEdge(node1, node3);
-    g.addEdge(node2, node3);
+    //g.addEdge(node1, node2);
+    //g.addEdge(node1, node3);
+    //g.addEdge(node2, node3);
 
-    g.print();
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+            else if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2f mousePosition = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
+                    g.addNode(mousePosition);
+                }
+            }
+            
+        }
 
-    std::cout << std::endl;
-    std::cout << Node::nextID << std::endl;
+        sf::Vector2f mousePosition = static_cast<sf::Vector2f>(sf::Mouse::getPosition(window));
+
+        const std::vector<std::shared_ptr<Node>> nodes = g.getNodes();
+
+        for (auto& node : nodes) {
+            sf::CircleShape circle = node->getCircle();
+            sf::Vector2f position = circle.getPosition();
+            float radius = circle.getRadius();
+            float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
+            if (distance <= radius) {
+                circle.setFillColor(sf::Color::Red);
+                node->setCircle(circle);
+            }
+            else {
+                circle.setFillColor(sf::Color::White);
+                node->setCircle(circle);
+            }
+        }
+
+        if (event.type == sf::Event::MouseButtonPressed) {
+            if (event.mouseButton.button == sf::Mouse::Right) {
+                g.info();
+            }
+        }
+
+        window.clear(sf::Color::Black);
+
+        g.draw(window);
+
+        window.display();
+    }
 
     return 0;
 }
