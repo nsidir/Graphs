@@ -68,20 +68,32 @@ public:
             std::cout << "Node ID: " << node->getID() << std::endl;
             const auto& neighbors = node->getNeighbors();
             std::cout << "Neighbors: ";
-            for (const auto& neighbor : neighbors) {
-                std::cout << neighbor->getID() << " ";
+            if (neighbors.empty()) {
+                std::cout << "Empty";
             }
-            std::cout << std::endl;
+            else {
+                for (const auto& neighbor : neighbors) {
+                    std::cout << neighbor->getID() << " ";
+                }
+                std::cout << std::endl;
+            }
         }
     }
 
+};
+
+class DirectedGraph : public Graph {
+public:
+    void addEdge(std::shared_ptr<Node>& source, std::shared_ptr<Node>& target) {
+        source->addNeighbor(target);
+    }
 };
 
 int Graph::nextID = 0;
 
 int main() {
 
-    Graph g;
+    DirectedGraph g;
     auto node1 = g.addNode();
     auto node2 = g.addNode();
     auto node3 = g.addNode();
@@ -92,6 +104,7 @@ int main() {
 
     g.print();
 
+    std::cout << std::endl;
     std::cout << Node::nextID << std::endl;
 
     return 0;
