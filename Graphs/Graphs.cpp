@@ -2,6 +2,9 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <cstdlib>
+
+//TODO: Make Edges Class and Fix Undo
 
 class Node {
 private:
@@ -35,6 +38,13 @@ public:
         neighbors.emplace_back(neighbor);
     }
 
+    void removeNeighbor(const std::shared_ptr<Node>& neighbor) {
+        auto it = std::find(neighbors.begin(), neighbors.end(), neighbor);
+        if (it != neighbors.end()) {
+            neighbors.erase(it);
+        }
+    }
+
     const std::vector<std::shared_ptr<Node>>& getNeighbors() const {
         return neighbors;
     }
@@ -60,9 +70,19 @@ public:
         return newNode;
     }
 
+    void pop_nodes() {
+        nodes.pop_back();
+    }
+
     virtual void addEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
         node1->addNeighbor(node2);
         node2->addNeighbor(node1);
+    }
+
+
+    void removeEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
+        node1->removeNeighbor(node2);
+        node2->removeNeighbor(node1);
     }
 
     const std::vector<std::shared_ptr<Node>>& getNodes() const {
@@ -122,7 +142,18 @@ public:
         nodes_coordinates.clear();
         startingNode.reset();
         Node::nextID = 0;
+        std::system("cls");
+    }
 
+    void undo() {
+        if (nodes.size() >= 1) {
+            if (nodes.size() >= 2) {
+                removeEdge(nodes[nodes.size() - 1], nodes[nodes.size() - 2]);
+            }
+            pop_nodes();
+            Node::nextID--;
+            
+        }
     }
 };
 
@@ -178,7 +209,7 @@ private:
 int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Graph Visualization");
 
-    DirectedGraph g;
+    Graph g;
     //auto node1 = g.addNode(sf::Vector2f(100.f, 100.f));
     //auto node2 = g.addNode(sf::Vector2f(300.f, 200.f));
     //auto node3 = g.addNode(sf::Vector2f(500.f, 100.f));
@@ -196,6 +227,12 @@ int main() {
             else if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::C) {
                     g.clear();
+                }
+                else if (event.key.code == sf::Keyboard::I) {
+                    g.info();
+                }
+                else if (event.key.code == sf::Keyboard::Z && event.key.control) {
+                    g.undo();
                 }
             }
             else if (event.type == sf::Event::MouseButtonPressed) {
@@ -226,11 +263,6 @@ int main() {
             }
         }
 
-        if (event.type == sf::Event::MouseButtonPressed) {
-            if (event.mouseButton.button == sf::Mouse::Middle) {
-                g.info();
-            }
-        }
 
         if (event.type == sf::Event::MouseButtonPressed) {
             if (event.mouseButton.button == sf::Mouse::Left) {
