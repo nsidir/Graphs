@@ -47,7 +47,7 @@ public:
 int Node::nextID = 0;
 
 class Graph {
-private:
+protected:
     std::vector<std::shared_ptr<Node>> nodes;
     std::vector<sf::Vector2f> nodes_coordinates;
     std::shared_ptr<Node> startingNode;
@@ -60,7 +60,7 @@ public:
         return newNode;
     }
 
-    void addEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
+    virtual void addEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
         node1->addNeighbor(node2);
         node2->addNeighbor(node1);
     }
@@ -126,10 +126,59 @@ public:
     }
 };
 
+class DirectedGraph : public Graph {
+public:
+    void addEdge(const std::shared_ptr<Node>& source, const std::shared_ptr<Node>& target) {
+        source->addNeighbor(target);
+    }
+
+    void draw(sf::RenderWindow& window) const {
+        for (const auto& node : nodes) {
+            node->draw(window);
+            const auto& neighbors = node->getNeighbors();
+            for (const auto& neighbor : neighbors) {
+                sf::Vector2f startPos = node->getCircle().getPosition() + sf::Vector2f(node->getCircle().getRadius(), node->getCircle().getRadius());
+                sf::Vector2f endPos = neighbor->getCircle().getPosition() + sf::Vector2f(neighbor->getCircle().getRadius(), neighbor->getCircle().getRadius());
+
+                sf::Vector2f direction = endPos - startPos;
+                float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+                sf::Vector2f unitDirection = direction / length;
+
+                const float nodeRadius = neighbor->getCircle().getRadius();
+                sf::Vector2f arrowOffset = unitDirection / 4.0f * nodeRadius;
+
+                const float arrowSize = 16.0f;
+                sf::Vertex line[] = {
+                    sf::Vertex(startPos),
+                    sf::Vertex(endPos - arrowOffset)
+                };
+                window.draw(line, 2, sf::Lines);
+
+                sf::Vertex arrowHead[] = {
+                    sf::Vector2f(endPos - arrowOffset - unitDirection * arrowSize),
+                    sf::Vector2f(endPos - arrowOffset - unitDirection * arrowSize - rotate(unitDirection, 45.0f) * arrowSize),
+                    sf::Vector2f(endPos - arrowOffset - unitDirection * arrowSize - rotate(unitDirection, -45.0f) * arrowSize)
+                };
+                window.draw(arrowHead, 3, sf::Triangles);
+            }
+        }
+    }
+
+private:
+    sf::Vector2f rotate(const sf::Vector2f& vector, float angle) const {
+        float radAngle = angle * 3.14159265359f / 180.0f;
+        float cosine = std::cos(radAngle);
+        float sine = std::sin(radAngle);
+        return sf::Vector2f(vector.x * cosine - vector.y * sine, vector.x * sine + vector.y * cosine);
+    }
+};
+
+
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Graph Visualization");
 
-    Graph g;
+    DirectedGraph g;
     //auto node1 = g.addNode(sf::Vector2f(100.f, 100.f));
     //auto node2 = g.addNode(sf::Vector2f(300.f, 200.f));
     //auto node3 = g.addNode(sf::Vector2f(500.f, 100.f));
