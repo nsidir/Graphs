@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 
-//TODO: Make Edges Class and Fix Undo
+//TODO: Make Edges Class
 
 class Node {
 private:
@@ -147,14 +147,15 @@ public:
 
     void undo() {
         if (nodes.size() >= 1) {
-            if (nodes.size() >= 2) {
-                removeEdge(nodes[nodes.size() - 1], nodes[nodes.size() - 2]);
+            auto lastNode = nodes.back();
+            for (const auto& neighbor : lastNode->getNeighbors()) {
+                neighbor->removeNeighbor(lastNode);
             }
-            pop_nodes();
+            nodes.pop_back();
             Node::nextID--;
-            
         }
     }
+
 };
 
 class DirectedGraph : public Graph {
