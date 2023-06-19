@@ -59,14 +59,12 @@ int Node::nextID = 0;
 class Graph {
 protected:
     std::vector<std::shared_ptr<Node>> nodes;
-    std::vector<sf::Vector2f> nodes_coordinates;
     std::shared_ptr<Node> startingNode;
 
 public:
     std::shared_ptr<Node> addNode(sf::Vector2f position) {
         auto newNode = std::make_shared<Node>(position);
         nodes.push_back(newNode);
-        nodes_coordinates.push_back(position);
         return newNode;
     }
 
@@ -87,10 +85,6 @@ public:
 
     const std::vector<std::shared_ptr<Node>>& getNodes() const {
         return nodes;
-    }
-
-    const std::vector<sf::Vector2f>& getNodesCoordinates() const {
-        return nodes_coordinates;
     }
 
     void setStartingNode(const std::shared_ptr<Node>& node) {
@@ -139,7 +133,6 @@ public:
 
     void clear() {
         nodes.clear();
-        nodes_coordinates.clear();
         startingNode.reset();
         Node::nextID = 0;
         std::system("cls");
