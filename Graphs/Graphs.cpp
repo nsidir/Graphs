@@ -4,7 +4,6 @@
 #include <iostream>
 #include <cstdlib>
 
-//TODO: Make Edges Class
 
 class Node {
 private:
@@ -35,7 +34,9 @@ public:
     }
 
     void addNeighbor(const std::shared_ptr<Node>& neighbor) {
-        neighbors.emplace_back(neighbor);
+        if (std::find(neighbors.begin(), neighbors.end(), neighbor) == neighbors.end()) {
+            neighbors.emplace_back(neighbor);
+        }
     }
 
     void removeNeighbor(const std::shared_ptr<Node>& neighbor) {
@@ -61,10 +62,26 @@ protected:
     std::vector<std::shared_ptr<Node>> nodes;
     std::shared_ptr<Node> startingNode;
 
+    struct Edge {
+        std::shared_ptr<Node> node1;
+        std::shared_ptr<Node> node2;
+    };
+
+    std::vector<Edge> edges;
+
+
+    enum Type { NodePl, EdgePl };
+
+
+    std::vector<Type> placementHistory;  // History of node and edge placements
+
+
+
 public:
     std::shared_ptr<Node> addNode(sf::Vector2f position) {
         auto newNode = std::make_shared<Node>(position);
         nodes.push_back(newNode);
+        placementHistory.push_back(NodePl);
         return newNode;
     }
 
@@ -72,15 +89,34 @@ public:
         nodes.pop_back();
     }
 
-    virtual void addEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
-        node1->addNeighbor(node2);
-        node2->addNeighbor(node1);
+    bool hasEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) const {
+        auto it = std::find_if(edges.begin(), edges.end(), [&](const Edge& edge) {
+            return (edge.node1 == node1 && edge.node2 == node2) || (edge.node1 == node2 && edge.node2 == node1);
+            });
+
+        return it != edges.end();
     }
 
+    virtual void addEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
+        if (node1 != node2 && !hasEdge(node1, node2)) {
+            edges.push_back({ node1, node2 });
+            node1->addNeighbor(node2);
+            node2->addNeighbor(node1);
+            placementHistory.push_back(EdgePl);
+        }
+    }
 
     void removeEdge(const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
         node1->removeNeighbor(node2);
         node2->removeNeighbor(node1);
+
+        auto it = std::find_if(edges.begin(), edges.end(), [&](const Edge& edge) {
+            return (edge.node1 == node1 && edge.node2 == node2) || (edge.node1 == node2 && edge.node2 == node1);
+            });
+
+        if (it != edges.end()) {
+            edges.erase(it);
+        }
     }
 
     const std::vector<std::shared_ptr<Node>>& getNodes() const {
@@ -139,13 +175,28 @@ public:
     }
 
     void undo() {
-        if (nodes.size() >= 1) {
-            auto lastNode = nodes.back();
-            for (const auto& neighbor : lastNode->getNeighbors()) {
-                neighbor->removeNeighbor(lastNode);
+        if (!placementHistory.empty()) {
+            if (placementHistory.back() == NodePl) {
+                if (nodes.size() >= 1) {
+                    auto lastNode = nodes.back();
+                    for (const auto& neighbor : lastNode->getNeighbors()) {
+                        neighbor->removeNeighbor(lastNode);
+                    }
+                    nodes.pop_back();
+                    Node::nextID--;
+                }
             }
-            nodes.pop_back();
-            Node::nextID--;
+            else if (placementHistory.back() == EdgePl) {
+                if (!nodes.empty()) {
+                    if (!edges.empty()) {
+                        const Edge& lastEdge = edges.back();
+                        edges.pop_back();
+                        removeEdge(lastEdge.node1, lastEdge.node2);
+                    }
+                }
+            }
+
+            placementHistory.pop_back();
         }
     }
 
@@ -204,6 +255,7 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Graph Visualization");
 
     Graph g;
+
     //auto node1 = g.addNode(sf::Vector2f(100.f, 100.f));
     //auto node2 = g.addNode(sf::Vector2f(300.f, 200.f));
     //auto node3 = g.addNode(sf::Vector2f(500.f, 100.f));
