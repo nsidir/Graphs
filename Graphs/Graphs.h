@@ -31,6 +31,8 @@ class Graph {
 protected:
     std::vector<std::shared_ptr<Node>> nodes;
     std::shared_ptr<Node> startingNode;
+    std::shared_ptr<Node> searchStartNode = nullptr;
+    std::shared_ptr<Node> searchEndNode = nullptr;
 
     struct Edge {
         std::shared_ptr<Node> node1;
@@ -60,7 +62,17 @@ public:
 
     const std::vector<std::shared_ptr<Node>>& getNodes() const;
 
+    void setSearchStartNode(const std::shared_ptr<Node>& node);
+
+    void setSearchEndNode(const std::shared_ptr<Node>& node);
+
+    const std::shared_ptr<Node>& getSearchStartNode();
+
+    const std::shared_ptr<Node>& getSearchEndNode();
+
     void setStartingNode(const std::shared_ptr<Node>& node);
+
+    bool startingNodeExists();
 
     void addEdgeIfValid(const std::shared_ptr<Node>& node);
 
@@ -78,7 +90,7 @@ class DirectedGraph : public Graph {
 public:
     void addEdge(const std::shared_ptr<Node>& source, const std::shared_ptr<Node>& target);
 
-    void draw(sf::RenderWindow& window) const;
+    void draw(sf::RenderWindow& window) const override;
 
 private:
     sf::Vector2f rotate(const sf::Vector2f& vector, float angle) const;

@@ -24,7 +24,6 @@ int main() {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) { 
-                delete mainScene;
                 window.close();
             }
               
@@ -34,7 +33,7 @@ int main() {
         }
     }
 
-
+    delete mainScene;
 
 
     return 0;

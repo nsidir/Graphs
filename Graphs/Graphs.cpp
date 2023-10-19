@@ -47,6 +47,27 @@
 
     void Node::draw(sf::RenderWindow& window) const {
         window.draw(circle);
+
+        sf::Font font;
+        
+        try {
+            font.loadFromFile("Fonts/BebasNeue-Regular.ttf");
+        }
+        catch (const std::exception& e) {
+            std::cout << "ERROR: " << e.what() << std::endl;
+        }
+
+        sf::Text idText;
+        idText.setFont(font);
+        idText.setCharacterSize(20);
+        idText.setString(std::to_string(getID()));
+        idText.setFillColor(sf::Color::Black);
+
+        sf::FloatRect textBounds = idText.getLocalBounds();
+        idText.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
+        idText.setPosition(circle.getPosition() + sf::Vector2f(circle.getRadius(), circle.getRadius()));
+
+        window.draw(idText);
     }
 
 int Node::nextID = 0;
@@ -98,8 +119,31 @@ const std::vector<std::shared_ptr<Node>>& Graph::getNodes() const {
     return nodes;
 }
 
+void Graph::setSearchStartNode(const std::shared_ptr<Node>& node) {
+    searchStartNode = node;
+}
+
+void Graph::setSearchEndNode(const std::shared_ptr<Node>& node) {
+    searchEndNode = node;
+}
+
+const std::shared_ptr<Node>& Graph::getSearchStartNode() {
+    return searchStartNode;
+}
+
+const std::shared_ptr<Node>& Graph::getSearchEndNode() {
+    return searchEndNode;
+}
+
 void Graph::setStartingNode(const std::shared_ptr<Node>& node) {
     startingNode = node;
+}
+
+bool Graph::startingNodeExists() {
+    if (startingNode.get() != nullptr) {
+        return true;
+    }
+    return false;
 }
 
 void Graph::addEdgeIfValid(const std::shared_ptr<Node>& node) {

@@ -39,6 +39,7 @@ void MainScene::setSceneManager(SceneManager& sceneManager) {
 }
 
 void MainScene::handleEvents(sf::Event event, sf::RenderWindow& window) {
+    bool clicked = false;
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
@@ -47,12 +48,22 @@ void MainScene::handleEvents(sf::Event event, sf::RenderWindow& window) {
             else if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::C) {
                     g.clear();
+                    g.setSearchStartNode(nullptr);
+                    g.setSearchEndNode(nullptr);
+                        
                 }
                 else if (event.key.code == sf::Keyboard::I) {
                     g.info();
+                    if (g.getSearchStartNode() && g.getSearchEndNode()) {
+                        std::cout << "Start Node is: " << g.getSearchStartNode()->getID() << std::endl;
+                        std::cout << "End Node is: " << g.getSearchEndNode()->getID() << std::endl;
+                    }
                 }
                 else if (event.key.code == sf::Keyboard::Z && event.key.control) {
                     g.undo();
+                }
+                else if (event.key.code == sf::Keyboard::Escape) {
+                    exit(0);
                 }
             }
             else if (event.type == sf::Event::MouseButtonPressed) {
@@ -73,19 +84,51 @@ void MainScene::handleEvents(sf::Event event, sf::RenderWindow& window) {
             sf::Vector2f position = circle.getPosition();
             float radius = circle.getRadius();
             float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
-            if (distance <= radius) {
-                circle.setFillColor(sf::Color::Red);
-                node->setCircle(circle);
-            }
-            else {
-                circle.setFillColor(sf::Color::White);
-                node->setCircle(circle);
-            }
         }
+        
 
 
         if (event.type == sf::Event::MouseButtonPressed) {
-            if (event.mouseButton.button == sf::Mouse::Left) {
+            if (event.mouseButton.button == sf::Mouse::Middle && !clicked) {
+                for (auto& node : nodes) {
+                    sf::CircleShape circle = node->getCircle();
+                    sf::Vector2f position = circle.getPosition();
+                    float radius = circle.getRadius();
+                    float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
+                    if (distance <= radius) {
+                        clicked = true;
+                        if (circle.getFillColor() == sf::Color::Red) {
+                            circle.setFillColor(sf::Color::Yellow);
+                            node->setCircle(circle);
+                            std::shared_ptr<Node> previousNode;
+                            if (!g.getSearchStartNode()) {
+                                g.setSearchStartNode(node);
+                                previousNode = node;
+                            }
+                            else if (g.getSearchStartNode() && !g.getSearchEndNode()) {
+                                g.setSearchEndNode(node);
+                            }
+                            else if (g.getSearchStartNode() && g.getSearchEndNode()) {
+                                g.setSearchStartNode(node);
+                                g.setSearchEndNode(previousNode);
+                            }
+                        }
+                        if (circle.getFillColor() == sf::Color::Yellow) {
+                            node->setCircle(circle);
+                        }
+                        else {
+                            circle.setFillColor(sf::Color::Red);
+                            node->setCircle(circle);
+                        }
+                    }
+                    else if (g.getSearchStartNode() && g.getSearchEndNode()) {
+                        circle.setFillColor(sf::Color::White);
+                        node->setCircle(circle);
+                    }
+                }
+                
+            }
+            else if (event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2f mousePosition = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
 
                 for (auto& node : nodes) {
@@ -94,12 +137,44 @@ void MainScene::handleEvents(sf::Event event, sf::RenderWindow& window) {
                     float radius = circle.getRadius();
                     float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
                     if (distance <= radius) {
-                        circle.setFillColor(sf::Color::Red);
-                        node->setCircle(circle);
+                        if (circle.getFillColor() == sf::Color::Red) {
+                            node->setCircle(circle);
+                            g.setStartingNode(node);
+                        }
+                        if (circle.getFillColor() == sf::Color::Yellow) {
+                            g.setStartingNode(node);
+                            node->setCircle(circle);
+                        }
+                        else {
+                            circle.setFillColor(sf::Color::Red);
+                            node->setCircle(circle);
+                            g.setStartingNode(node);
+                        }
+                    }
+                }
+            }
+        }
+        else if (event.type == sf::Event::MouseMoved) {
+            sf::Vector2f mousePosition = sf::Vector2f(event.mouseMove.x, event.mouseMove.y);
 
-                        g.setStartingNode(node); // Set the starting node for the edge
+            for (auto& node : nodes) {
+                sf::CircleShape circle = node->getCircle();
+                sf::Vector2f position = circle.getPosition();
+                float radius = circle.getRadius();
+                float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
+
+                if (distance <= radius) {
+                    if (circle.getFillColor() == sf::Color::Yellow) {
+                        circle.setFillColor(sf::Color::Yellow);
+                        node->setCircle(circle);
                     }
                     else {
+                        circle.setFillColor(sf::Color::Red);
+                        node->setCircle(circle);
+                    }
+                }
+                else {
+                    if (circle.getFillColor() != sf::Color::Yellow) {
                         circle.setFillColor(sf::Color::White);
                         node->setCircle(circle);
                     }
@@ -107,7 +182,7 @@ void MainScene::handleEvents(sf::Event event, sf::RenderWindow& window) {
             }
         }
         else if (event.type == sf::Event::MouseButtonReleased) {
-            if (event.mouseButton.button == sf::Mouse::Left) {
+            if (event.mouseButton.button == sf::Mouse::Left || event.mouseButton.button == sf::Mouse::Middle) {
                 sf::Vector2f mousePosition = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
 
                 for (auto& node : nodes) {
@@ -115,19 +190,25 @@ void MainScene::handleEvents(sf::Event event, sf::RenderWindow& window) {
                     sf::Vector2f position = circle.getPosition();
                     float radius = circle.getRadius();
                     float distance = std::sqrt(std::pow(mousePosition.x - position.x - radius, 2) + std::pow(mousePosition.y - position.y - radius, 2));
-                    if (distance <= radius) {
-                        circle.setFillColor(sf::Color::Red);
-                        node->setCircle(circle);
 
-                        g.addEdgeIfValid(node); // Add the edge if a valid node is under the mouse position
-                    }
-                    else {
-                        circle.setFillColor(sf::Color::White);
+                    if (distance <= radius) {
+                        clicked = false;
                         node->setCircle(circle);
+                        g.addEdgeIfValid(node); // Add the edge if a valid node is under the mouse position
+
+                        if (circle.getFillColor() == sf::Color::Red) {
+                            circle.setFillColor(sf::Color::Yellow);
+                        }
+                        else {
+                            circle.setFillColor(sf::Color::Red);
+                        }
+                        
                     }
                 }
             }
         }
+
+
 
         this->draw(window);
     }

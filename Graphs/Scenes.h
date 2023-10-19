@@ -9,9 +9,9 @@ public:
     virtual void draw(sf::RenderWindow& window) = 0;
 };
 
-class MainScene; // Forward declaration
+class MainScene;
 
-class MenuScene; // Forward declaration
+class MenuScene;
 
 class SceneManager {
 private:
