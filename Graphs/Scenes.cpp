@@ -9,6 +9,9 @@
 
 #include "Graphs.h"
 #include "Scenes.h"
+#include "Font.h"
+
+
 
 
 void SceneManager::setCurrentScene(Scene& scene) {
@@ -225,7 +228,7 @@ void MainScene::draw(sf::RenderWindow& window) {
 MenuScene::MenuScene(SceneManager& sceneManager, MainScene* mainScene) {
     setSceneManager(sceneManager);
     try {
-        font.loadFromFile("Fonts/BebasNeue-Regular.ttf");
+        font.loadFromFile(FONT);
     }
     catch (const std::exception& e) {
         std::cout << "ERROR: " << e.what() << std::endl;

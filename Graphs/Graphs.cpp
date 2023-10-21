@@ -6,7 +6,7 @@
 #include <algorithm>
 
 #include "Graphs.h"
-
+#include "Font.h"
 
     Node::Node(sf::Vector2f position) : id(nextID++) {
         circle.setRadius(20.f);
@@ -51,7 +51,7 @@
         sf::Font font;
         
         try {
-            font.loadFromFile("Fonts/BebasNeue-Regular.ttf");
+            font.loadFromFile(FONT);
         }
         catch (const std::exception& e) {
             std::cout << "ERROR: " << e.what() << std::endl;
