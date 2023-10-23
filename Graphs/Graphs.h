@@ -76,6 +76,8 @@ public:
 
     void addEdgeIfValid(const std::shared_ptr<Node>& node);
 
+    int shortestPath(const Graph* graph, std::shared_ptr<Node> start, std::shared_ptr<Node> end) const;
+
     void info() const;
 
     virtual void draw(sf::RenderWindow& window) const;

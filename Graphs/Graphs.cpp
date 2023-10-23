@@ -156,9 +156,9 @@ void Graph::addEdgeIfValid(const std::shared_ptr<Node>& node) {
     startingNode.reset();
 }
 
-int shortestPath(const Graph& graph, std::shared_ptr<Node> start, std::shared_ptr<Node> end) {
+int Graph::shortestPath(const Graph* graph, std::shared_ptr<Node> start, std::shared_ptr<Node> end) const {
     constexpr int INF = std::numeric_limits<int>::max();
-    int numNodes = graph.getNodes().size();
+    int numNodes = graph->getNodes().size();
 
     std::vector<int> memo(numNodes, INF);
 
@@ -206,7 +206,7 @@ void Graph::info() const {
         std::cout << "-------------------" << std::endl;
     }
     if (searchStartNode && searchEndNode) {
-        std::cout << "Shortest Path length is: " << shortestPath(*this, searchStartNode, searchEndNode) << std::endl;
+        std::cout << "Shortest Path length is: " << shortestPath(this, searchStartNode, searchEndNode) << std::endl;
     }
 
     std::cout << "-------------------" << std::endl;
