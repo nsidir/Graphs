@@ -4,9 +4,12 @@
 #include <iostream>
 #include <cstdlib>
 #include <algorithm>
+#include <functional>
+#include <limits>
 
 #include "Graphs.h"
 #include "Font.h"
+#include <queue>
 
     Node::Node(sf::Vector2f position) : id(nextID++) {
         circle.setRadius(20.f);
@@ -153,6 +156,39 @@ void Graph::addEdgeIfValid(const std::shared_ptr<Node>& node) {
     startingNode.reset();
 }
 
+int shortestPath(const Graph& graph, std::shared_ptr<Node> start, std::shared_ptr<Node> end) {
+    constexpr int INF = std::numeric_limits<int>::max();
+    int numNodes = graph.getNodes().size();
+
+    std::vector<int> memo(numNodes, INF);
+
+    std::queue<std::shared_ptr<Node>> bfsQueue;
+    bfsQueue.push(start);
+    memo[start->getID()] = 0;
+
+    while (!bfsQueue.empty()) {
+        auto currentNode = bfsQueue.front();
+        bfsQueue.pop();
+
+        const auto& neighbors = currentNode->getNeighbors();
+        for (const auto& neighbor : neighbors) {
+            if (memo[neighbor->getID()] == INF) {
+                memo[neighbor->getID()] = memo[currentNode->getID()] + 1;
+                bfsQueue.push(neighbor);
+
+                if (neighbor == end) {
+                    return memo[end->getID()];
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+
+
 void Graph::info() const {
     for (const auto& node : nodes) {
         std::cout << "Node ID: " << node->getID() << std::endl;
@@ -169,6 +205,10 @@ void Graph::info() const {
         }
         std::cout << "-------------------" << std::endl;
     }
+    if (searchStartNode && searchEndNode) {
+        std::cout << "Shortest Path length is: " << shortestPath(*this, searchStartNode, searchEndNode) << std::endl;
+    }
+
     std::cout << "-------------------" << std::endl;
 }
 
