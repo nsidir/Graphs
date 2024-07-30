@@ -4,7 +4,7 @@
 Install SFML Library
 
 ### For Ubuntu
-sudo apt-get install libsfml-dev
+`sudo apt-get install libsfml-dev`
 
 ## Install
 
